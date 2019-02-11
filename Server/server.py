@@ -1,9 +1,9 @@
 from flask import Flask, request
 from flask_restful import Resource, Api, reqparse
 from sqlalchemy.sql import select, insert, delete
-from sqlalchemy.orm import mapper, sessionmaker
+from sqlalchemy.orm import mapper, sessionmaker, relationship
 from sqlalchemy import create_engine, MetaData, Table, Column, ForeignKey
-from sqlalchemy import Boolean, Integer, Date, String, Float, Text, Time
+from sqlalchemy import Boolean, Integer, Date, String, Float, Text
 from json import dumps
 from flask_jsonpify import jsonify
 from datetime import datetime
@@ -14,18 +14,18 @@ from config import base_price, price_coefs, token_hash
 # ================= Classes responsible for database mapping ==================
 
 class Session(object):
-    def __init__(self, id=None, name=None, time=None,
+    def __init__(self, id=None, name=None, date_time=None,
                  seats_left=1147, price_coef=1.0):
         self.id = id
         self.name = name
-        self.time = time
+        self.date_time = date_time
         self.seats_left = seats_left
         self.price_coef = price_coef
 
     def __repr__(self):
         return ('Session #{}\nName: "{}"\nTime: {}\nSeats left: {}'
                 ''.format(self.id, self.name,
-                          self.time, self.seats_left))
+                          self.date_time, self.seats_left))
 
     def makeSeats(self):
         prices = [None] * 1147
@@ -40,7 +40,7 @@ class Session(object):
         d = {
             'id': self.id,
             'name': self.name,
-            'time': self.time.strftime('%Y.%m.%d %H:%M'),
+            'date_time': self.date_time,
             'seats_left': self.seats_left
         }
         return d
@@ -83,7 +83,8 @@ class Sessions(Resource):
         elif md5(args['token'].encode('utf-8')).hexdigest() != token_hash:
             return {'Error': 'Invalid access token'}
         s = Session(name=args['name'],
-                    time=datetime.strptime(args['time'], '%Y.%m.%d %H:%M'),
+                    date_time=datetime.strptime(
+                        args['date_time'], '%Y-%m-%d %H:%M'),
                     price_coef=args['price_coef'])
         session.add(s)
         session.commit()
@@ -115,6 +116,7 @@ class Sessions_id(Resource):
             .first()
         if s is None:
             return {'Error': 'Id not found'}, 404
+        seats = session.query(Seat).filter_by(session_id=s.id).all()
         response = s.toDict()
         session.delete(s)
         session.commit()
@@ -136,7 +138,7 @@ metadata = MetaData()
 sessions_table = Table('sessions', metadata,
                        Column('id', Integer, primary_key=True, nullable=False),
                        Column('name', String),
-                       Column('time', Date),
+                       Column('date_time', Text),
                        Column('price_coef', Float),
                        Column('seats_left', Integer))
 
@@ -148,8 +150,10 @@ seats_table = Table('seats', metadata,
                     Column('available', Boolean))
 
 metadata.create_all(engine)      # Create metadata
-mapper(Session, sessions_table)  # map Session class to sessions_table
-mapper(Seat, seats_table)        # map Seat to seats_table
+mapper(Session, sessions_table, properties={
+       'seats': relationship(Seat, backref='sessions', cascade='delete')
+       })
+mapper(Seat, seats_table)
 
 # Create database session and bind it to the engine
 session = sessionmaker(bind=engine)()
@@ -161,7 +165,7 @@ api = Api(app)
 # Initialize request parser to parse POST request when adding sessions
 post_parser = reqparse.RequestParser()
 post_parser.add_argument('name')
-post_parser.add_argument('time')
+post_parser.add_argument('date_time')
 post_parser.add_argument('price_coef')
 post_parser.add_argument('token')
 

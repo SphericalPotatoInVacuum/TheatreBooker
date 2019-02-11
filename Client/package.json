@@ -17,6 +17,7 @@
     },
     "homepage": "https://github.com/SphericalPotatoInVacuum/TheatreBooker#readme",
     "dependencies": {
-        "electron": "^4.0.4"
+        "electron": "^4.0.4",
+        "request": "^2.88.0"
     }
 }

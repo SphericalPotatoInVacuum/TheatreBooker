@@ -1,13 +1,14 @@
-const electron = require("electron");
-const url = require("url");
-const path = require("path");
+const electron = require('electron');
+const url = require('url');
+const path = require('path');
+const request = require('request');
 
 const { app, BrowserWindow, Menu, dialog } = electron;
 
 let mainWindow, confirmWindow;
 
 // Listen for app to be ready
-app.on("ready", () => {
+app.on('ready', () => {
     // Create a new window
     mainWindow = new BrowserWindow({});
     // Maximize our window
@@ -15,20 +16,20 @@ app.on("ready", () => {
     // Load into window
     mainWindow.loadURL(
         url.format({
-            pathname: path.join(__dirname, "mainWindow.html"),
-            protocol: "file:",
+            pathname: path.join(__dirname, 'mainWindow.html'),
+            protocol: 'file:',
             slashes: true
         })
     );
 
     // Quit app on mainWindow close
-    mainWindow.on("close", e => {
+    mainWindow.on('close', e => {
         const quit = dialog.showMessageBox({
-            type: "warning",
-            title: "Are you sure?",
+            type: 'warning',
+            title: 'Are you sure?',
             message:
-                "Are you sure you want to quit? You have some selected, but not yet booked seats.",
-            buttons: ["Yes", "No"]
+                'Are you sure you want to quit? You have some selected, but not yet booked seats.',
+            buttons: ['Yes', 'No']
         });
         if (quit == 1) {
             e.preventDefault();
@@ -43,20 +44,20 @@ app.on("ready", () => {
 
 const mainMenuTemplate = [
     {
-        label: "File",
+        label: 'File',
         submenu: [
             {
-                label: "Update",
+                label: 'Update',
                 accelerator:
-                    process.platform == "darwin" ? "Command+U" : "Ctrl+U",
+                    process.platform == 'darwin' ? 'Command+U' : 'Ctrl+U',
                 click() {
                     mainWindow.reload();
                 }
             },
             {
-                label: "Quit",
+                label: 'Quit',
                 accelerator:
-                    process.platform == "darwin" ? "Command+Q" : "Ctrl+Q",
+                    process.platform == 'darwin' ? 'Command+Q' : 'Ctrl+Q',
                 click() {
                     app.quit();
                 }
@@ -65,14 +66,14 @@ const mainMenuTemplate = [
     }
 ];
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== 'production') {
     mainMenuTemplate.push({
-        label: "Developer",
+        label: 'Developer',
         submenu: [
             {
-                label: "Toggle dev tools",
+                label: 'Toggle dev tools',
                 accelerator:
-                    process.platform == "darwin" ? "Command+I" : "Ctrl+I",
+                    process.platform == 'darwin' ? 'Command+I' : 'Ctrl+I',
                 click(item, focusedWindow) {
                     focusedWindow.toggleDevTools();
                 }
