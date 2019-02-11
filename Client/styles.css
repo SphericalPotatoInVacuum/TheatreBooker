@@ -1,0 +1,35 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.wrapper {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.tickets_scheme {
+    margin: 0 auto;
+}
+
+.tickets_scheme td {
+    vertical-align: middle;
+    width: 15px;
+    height: 15px;
+    text-align: center;
+    font-size: 8pt;
+    line-height: 15px;
+}
+
+.tickets_scheme td[id] {
+    background-color: #DDDDDD;
+    cursor: default;
+    border-radius: 1px;
+}
+
+.tickets_scheme td.label {
+    font-size: 9pt;
+}
+
+.tickets_scheme td.row-item {
+    font-size: 10pt;
+}
