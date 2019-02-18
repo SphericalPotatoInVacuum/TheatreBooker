@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="styles.css" type="text/css">
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="css/materialize.css" media="screen,projection" />
+    <title>TheatreBooker</title>
+</head>
+
+
+<body>
+    <div class="row" style="margin-bottom: 0 !important">
+        <div class="col s12">
+            <div class="card" style="margin-bottom: 7px !important">
+                <div class="card-content">
+                    <h5>Введите токен, который вам выдали при бронировании билетов:</h5>
+                    <br>
+                    <div class="input-field">
+                        <input id="token" type="text" class="validate">
+                        <label for="token">Токен бронирования</label>
+                    </div>
+                </div>
+                <div class="card-action">
+                    <a id="continue" href="#">Продолжить</a>
+                    <a id="cancel" href="#">Отмена</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/bin/materialize.js"></script>
+    <script src="cancelBookingWindow.js"></script>
+</body>
+
+</html>

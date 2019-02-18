@@ -1,6 +1,6 @@
 # Base price and price coefficients for various locations
 base_price = 1000
-price_coefs = {
+seat_coefs = {
     (1, 360): 1,        # parter
     (361, 444): 1.2,    # parter (orchestra hole)
     (445, 453): 1.2,    # benuar (left)

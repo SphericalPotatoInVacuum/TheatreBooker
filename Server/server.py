@@ -1,62 +1,75 @@
 from flask import Flask, request
 from flask_restful import Resource, Api, reqparse
-from sqlalchemy.sql import select, insert, delete
-from sqlalchemy.orm import mapper, sessionmaker, relationship
-from sqlalchemy import create_engine, MetaData, Table, Column, ForeignKey
-from sqlalchemy import Boolean, Integer, Date, String, Float, Text
+from flask_sqlalchemy import SQLAlchemy
 from json import dumps
 from flask_jsonpify import jsonify
 from datetime import datetime
 from hashlib import md5
-from config import base_price, price_coefs, token_hash
+from config import base_price, seat_coefs, token_hash
+from os import urandom
+
+# Initialize flask app and api
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///theatre.db'
+db = SQLAlchemy(app)
+api = Api(app)
 
 
-# ================= Classes responsible for database mapping ==================
+class Session(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    time = db.Column(db.DateTime, nullable=False)
+    price_coef = db.Column(db.Float, nullable=False)
+    seats_left = db.Column(db.Integer, nullable=False)
+    seats = db.relationship('Seat', backref='session',
+                            cascade='delete, save-update')
 
-class Session(object):
-    def __init__(self, id=None, name=None, date_time=None,
-                 seats_left=1147, price_coef=1.0):
-        self.id = id
-        self.name = name
-        self.date_time = date_time
-        self.seats_left = seats_left
-        self.price_coef = price_coef
+    def __init__(self, name=None, time=None,
+                 price_coef=1.0, seats_left=1147):
+        super(Session, self).__init__(
+            id=None, name=name,
+            time=datetime.strptime(time, '%Y-%m-%d %H:%M')
+            if time is not None else datetime.utcnow(),
+            price_coef=price_coef, seats_left=seats_left
+        )
+        last = Session.query.order_by(Session.id.desc()).first()
+        self.id = last.id + 1 if last is not None else 1
+        prices = [None] * 1147
+        for x in seat_coefs.keys():
+            prices[x[0] - 1:x[1]] = \
+                [base_price * seat_coefs[x] * self.price_coef] \
+                * (x[1] - x[0] + 1)
+        self.seats = [
+            Seat(id=(self.id - 1) * 1147 + i, number=i, price=prices[i - 1],
+                 session_id=self.id)
+            for i in range(1, 1148)
+        ]
 
     def __repr__(self):
-        return ('Session #{}\nName: "{}"\nTime: {}\nSeats left: {}'
-                ''.format(self.id, self.name,
-                          self.date_time, self.seats_left))
-
-    def makeSeats(self):
-        prices = [None] * 1147
-        for x in price_coefs.keys():
-            prices[x[0] - 1:x[1]] = \
-                [base_price * price_coefs[x] * self.price_coef] \
-                * (x[1] - x[0] + 1)
-        return [Seat(int(str(self.id) + str(i)), i, self.id, prices[i - 1])
-                for i in range(1, 1148)]
+        return '<Session %r>' % self.id
 
     def toDict(self):
         d = {
             'id': self.id,
             'name': self.name,
-            'date_time': self.date_time,
+            'time': datetime.strftime(self.time, '%Y-%m-%d %H:%M'),
+            'price_coef': self.price_coef,
             'seats_left': self.seats_left
         }
         return d
 
 
-class Seat(object):
-    def __init__(self, id, number, session_id, price, available=True):
-        self.id = id
-        self.number = number
-        self.session_id = session_id
-        self.price = price
-        self.available = available
+class Seat(db.Model):
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    number = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Integer, nullable=False)
+    available = db.Column(db.Boolean, nullable=False, default=True)
+    holder_token = db.Column(db.String(32))
+    session_id = db.Column(db.Integer, db.ForeignKey('session.id'),
+                           nullable=False)
 
     def __repr__(self):
-        return ('Seat #{}\nSession-relative id:{}\nSession id:{}\nPrice:{}'
-                ''.format(self.id, self.number, self.session_id, self.price))
+        return '<Seat %r>' % self.id
 
     def toDict(self):
         d = {
@@ -68,7 +81,14 @@ class Seat(object):
         return d
 
 
+class BookToken(db.Model):
+    token = db.Column(db.String(32), primary_key=True, unique=True)
+    issue_time = db.Column(db.DateTime)
+    expiry_time = db.Column(db.DateTime)
+
+
 # ================= Classes responsible for request handling ==================
+
 
 class Sessions(Resource):
     def get(self):
@@ -78,45 +98,38 @@ class Sessions(Resource):
 
     def post(self):
         args = post_parser.parse_args()
+
         if args.get('token', None) is None:
-            return {'Error': 'No access token was provided'}
+            return {'Error': 'No access token was provided'}, 401
         elif md5(args['token'].encode('utf-8')).hexdigest() != token_hash:
-            return {'Error': 'Invalid access token'}
-        s = Session(name=args['name'],
-                    date_time=datetime.strptime(
-                        args['date_time'], '%Y-%m-%d %H:%M'),
-                    price_coef=args['price_coef'])
+            return {'Error': 'Invalid access token'}, 401
+
+        s = Session(name=args['name'], time=args['time'],
+                    price_coef=float(args['price_coef']))
+
+        response = s.toDict()
         session.add(s)
         session.commit()
-        seats = s.makeSeats()
-        sid = s.id
-        session.add_all(seats)
-        session.commit()
         session.close()
-        return {'id': sid}
+        return response
 
 
 class Sessions_id(Resource):
     def get(self, session_id):
-        s = session.query(Session) \
-            .filter_by(id=session_id) \
-            .first()
+        s = Session.query.filter_by(id=session_id).first()
         if s is None:
-            return {'Error': 'No such session id'}
+            return {'Error': 'No such session id'}, 404
         return s.toDict()
 
     def delete(self, session_id):
         args = del_parser.parse_args()
         if args.get('token', None) is None:
-            return {'Error': 'No access token was provided'}
+            return {'Error': 'No access token was provided'}, 401
         elif md5(args['token'].encode('utf-8')).hexdigest() != token_hash:
-            return {'Error': 'Invalid access token'}
-        s = session.query(Session) \
-            .filter_by(id=session_id) \
-            .first()
+            return {'Error': 'Invalid access token'}, 401
+        s = Session.query.filter_by(id=session_id).first()
         if s is None:
             return {'Error': 'Id not found'}, 404
-        seats = session.query(Seat).filter_by(session_id=s.id).all()
         response = s.toDict()
         session.delete(s)
         session.commit()
@@ -126,46 +139,73 @@ class Sessions_id(Resource):
 
 class Seats_session_id(Resource):
     def get(self, session_id):
-        seats = session.query(Seat).filter_by(session_id=session_id)
-        return {'items': [s.toDict() for s in seats]}
+        seats = Seat.query.filter_by(session_id=session_id).all()
+        prices = sorted(list(set([s.price for s in seats])))
+        return {'items': [s.toDict() for s in seats], 'prices': prices}
 
 
-# Initialize database engine
-engine = create_engine('sqlite:///theatre.db')
-metadata = MetaData()
+class Seats_seat_id(Resource):
+    def post(self):
+        args = book_parser.parse_args()
+        if args['seat_ids'] is None or args['seat_ids'] == '':
+            return {'Error': 'You must provide seat ids'}, 400
+        seat_ids = map(int, args['seat_ids'].split(','))
+        seats = []
+        for seat_id in seat_ids:
+            seat = Seat.query.filter_by(id=seat_id).first()
+            if not seat.available:
+                return {
+                    'Error': 'Booking overlap'
+                }, 403
+            seats.append(seat)
+        token = urandom(32).hex()
+        while BookToken.query.filter_by(token=token).first() is not None:
+            token = urandom(32).hex()
+        for seat in seats:
+            seat.holder_token = token
+            seat.available = False
+        session.add(BookToken(token=token, expiry_time=seats[0].session.time))
+        session.commit()
+        session.close()
+        return {'result': 'OK', 'token': token}
 
-# Initialize database tables for mapping
-sessions_table = Table('sessions', metadata,
-                       Column('id', Integer, primary_key=True, nullable=False),
-                       Column('name', String),
-                       Column('date_time', Text),
-                       Column('price_coef', Float),
-                       Column('seats_left', Integer))
+    def delete(self):
+        args = unbook_parser.parse_args()
+        if args.get('token', '') == '':
+            return {'Error': 'No access token was provided'}, 400
+        token = args['token']
+        book_token = BookToken.query.filter_by(token=token).first()
+        if book_token is None:
+            return {
+                'Error': 'Book token is not valid. '
+                'It is expired or not yet created'
+            }, 401
+        if book_token.expiry_time < datetime.now():
+            session.delete(book_token)
+            return {
+                'Error': 'Book token is not valid. '
+                'It is expired or not yet created'
+            }, 401
+        seats = Seat.query.filter_by(holder_token=args['token'])
+        response = {'items': []}
+        for seat in seats:
+            seat.available = True
+            seat.holder_token = None
+            response['items'].append(seat.toDict())
+        session.delete(book_token)
+        session.commit()
+        session.close()
+        return response
 
-seats_table = Table('seats', metadata,
-                    Column('id', Integer, primary_key=True, nullable=False),
-                    Column('number', Integer),
-                    Column('session_id', Integer, ForeignKey('sessions.id')),
-                    Column('price', Integer),
-                    Column('available', Boolean))
 
-metadata.create_all(engine)      # Create metadata
-mapper(Session, sessions_table, properties={
-       'seats': relationship(Seat, backref='sessions', cascade='delete')
-       })
-mapper(Seat, seats_table)
-
-# Create database session and bind it to the engine
-session = sessionmaker(bind=engine)()
-
-# Initialize flask app and api
-app = Flask(__name__)
-api = Api(app)
+# Create all tables
+db.create_all()
+session = db.session
 
 # Initialize request parser to parse POST request when adding sessions
 post_parser = reqparse.RequestParser()
 post_parser.add_argument('name')
-post_parser.add_argument('date_time')
+post_parser.add_argument('time')
 post_parser.add_argument('price_coef')
 post_parser.add_argument('token')
 
@@ -173,10 +213,20 @@ post_parser.add_argument('token')
 del_parser = reqparse.RequestParser()
 del_parser.add_argument('token')
 
+# Initialize request parser to parse POST request when booking seats
+book_parser = reqparse.RequestParser()
+book_parser.add_argument('seat_ids')
+
+# Initialize request parser to parse DELETE request when booking seats
+unbook_parser = reqparse.RequestParser()
+unbook_parser.add_argument('token')
+
+
 # Map routes to dedicated classes
 api.add_resource(Sessions, '/sessions')
 api.add_resource(Sessions_id, '/sessions/<session_id>')
 api.add_resource(Seats_session_id, '/seats/<session_id>')
+api.add_resource(Seats_seat_id, '/seats/book')
 
 if __name__ == '__main__':
     app.run(port=1337)

@@ -1,14 +1,34 @@
 body {
     font-family: Arial, Helvetica, sans-serif;
+    background-image: url('images/red_velvet_darken.jpg');
 }
 
 .wrapper {
-    margin: 0 auto;
+    width: 90%;
     text-align: center;
+    display: flex;
+    flex-direction: row;
+    margin: 0 auto;
+}
+
+.tickets-wrapper {
+    width: 76%;
+    display: flex;
+    align-self: flex-start;
+}
+
+.info-wrapper {
+    width: 16%;
+    min-height: 100%;
+    display: flex;
+    margin-left: auto;
+    border: 1px solid brown;
 }
 
 .tickets_scheme {
     margin: 0 auto;
+    border-radius: 4px;
+    user-select: none;
 }
 
 .tickets_scheme td {
@@ -18,18 +38,95 @@ body {
     text-align: center;
     font-size: 8pt;
     line-height: 15px;
-}
-
-.tickets_scheme td[id] {
-    background-color: #DDDDDD;
-    cursor: default;
     border-radius: 1px;
+    box-sizing: border-box;
 }
 
 .tickets_scheme td.label {
-    font-size: 9pt;
+    font-size: 10pt;
+    color: #fff000;
 }
 
 .tickets_scheme td.row-item {
     font-size: 10pt;
+    color: #fff000;
+}
+
+.tickets_scheme td.available {
+    cursor: pointer;
+}
+
+.tickets_scheme td.available:hover {
+    box-shadow: inset 0 0 0 1px #fff000;
+    background-color: #880000 !important;
+    color: #fff000;
+}
+
+.tickets_scheme td.unavailable {
+    background-color: #DDDDDD;
+}
+
+.tickets_scheme td.selected {
+    background-color: rgb(17, 59, 144);
+    color: white;
+    box-shadow: inset 0 0 0 1px rgb(149, 255, 255);
+}
+
+.tickets_scheme td.selected:hover {
+    cursor: pointer;
+    background-color: rgb(36, 85, 184);
+    color: white;
+    box-shadow: inset 0 0 0 1px rgb(96, 170, 253);
+}
+
+.tickets_scheme td.scene {
+    font-size: 20px;
+    line-height: 20px;
+    color: #fff000;
+}
+
+.image-overflow {
+    overflow: hidden;
+    height: 150px;
+}
+
+.image-overflow img.overflow {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+.image-overflow::before {
+    background-image: linear-gradient(transparent 0%, black 100%);
+    content: "\00a0";
+    height: 100%;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 1;
+}
+
+.card-title {
+    z-index: 2;
+}
+
+td[id] {
+    background: #aaaaaa;
+}
+
+span.badge {
+    float: left !important;
+    margin-left: 0 !important;
+    margin-right: 14px !important;
+}
+
+.menu-btn {
+    width: 100%;
+}
+
+.slides {
+    background-color: transparent !important;
+}
+
+.row {
+    width: 100%;
 }
