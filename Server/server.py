@@ -164,6 +164,8 @@ class Seats_seat_id(Resource):
         for seat in seats:
             seat.holder_token = token
             seat.available = False
+        session_l = Session.query.filter_by(id=seats[0].session_id).first()
+        session_l.seats_left -= len(seats)
         session.add(BookToken(token=token, expiry_time=seats[0].session.time))
         session.commit()
         session.close()
@@ -186,7 +188,9 @@ class Seats_seat_id(Resource):
                 'Error': 'Book token is not valid. '
                 'It is expired or not yet created'
             }, 401
-        seats = Seat.query.filter_by(holder_token=args['token'])
+        seats = Seat.query.filter_by(holder_token=args['token']).all()
+        session_l = Session.query.filter_by(id=seats[0].session_id).first()
+        session_l.seats_left += len(seats)
         response = {'items': []}
         for seat in seats:
             seat.available = True
