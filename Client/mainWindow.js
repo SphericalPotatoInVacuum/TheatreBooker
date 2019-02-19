@@ -178,8 +178,6 @@ function update_seats() {
             }
             let data = JSON.parse(body);
             let date = new Date(data['time']);
-            console.log(data['time']);
-            console.log(date);
             session_name.innerText = data['name'];
             date_p.innerText = `${date.getDate()} ${
                 months[date.getMonth() - 1]
@@ -206,7 +204,7 @@ function update_seats() {
 
         for (let seat of seats) {
             let seat_el = document.getElementById(seat.number);
-            seat_el.id = seat.id;
+            seat_el.seat_id = seat.id;
             if (seat.available) {
                 seat_el.className = `${
                     priceclasses[pricezones[seat.price] - 1]
@@ -221,7 +219,7 @@ function update_seats() {
 }
 
 function selectSeat(e) {
-    selected.push(parseInt(e.target.id));
+    selected.push(parseInt(e.target.seat_id));
     total_p.innerText = `${(total_price += prices[e.target.id])} р.`;
     selected_p.innerText = `Вы выбрали ${selected.length} ${seat_inclination(
         selected.length
@@ -238,7 +236,7 @@ function deselectSeat(e) {
     } available`;
     total_p.innerText = `${(total_price -= prices[e.target.id])} р.`;
     for (let i = 0; i < selected.length; i++) {
-        if (selected[i] == [e.target.id]) {
+        if (selected[i] == [e.target.seat_id]) {
             selected.splice(i, 1);
         }
     }
@@ -291,7 +289,11 @@ function book() {
                 buttons: ['ОК']
             });
             while (selected.length > 0) {
-                document.getElementById(selected.pop()).click();
+                id = selected.pop() % 1147;
+                if (id == 0) {
+                    id = 1147;
+                }
+                document.getElementById(id).click();
             }
             ipcRenderer.send('update:selected', 0);
             update_seats();
