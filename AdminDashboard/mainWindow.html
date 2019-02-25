@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="css/materialize.css" media="screen,projection" />
+    <link rel="stylesheet" href="css/styles.css" type="text/css" />
+    <title>Admin Dashboard</title>
+</head>
+
+<body class="indigo darken-4">
+    <div class="container white" style="min-height: 100%">
+        <div class="row" style="flex-wrap: wrap; display: flex">
+            <div class="col s3 valign-wrapper">
+                <a id="refresh-btn" class="waves-effect waves-light btn" style="margin-left: auto; margin-right: auto;"><i class="material-icons">refresh</i></a>
+                <a id="add-btn" class="waves-effect waves-light btn" style="margin-left: auto; margin-right: auto;"><i class="material-icons left">add</i>новый сеанс</a>
+            </div>
+            <div class="col s3 valign-wrapper">
+                <a id="delete-old-btn" class="waves-effect waves-light btn" style="margin-left: auto; margin-right: auto;"><i class="material-icons left">delete</i>удал. состоявшиеся</a>
+            </div>
+            <div class="input-field col s3">
+                <input id="token" type="text">
+                <label for="token">Токен доступа</label>
+            </div>
+            <div class="col s3 valign-wrapper">
+                <a id="update-token" class="waves-effect waves-light btn" style="margin-left: auto; margin-right: auto;">
+                    <i class="material-icons left">check</i>обновить токен
+                </a>
+            </div>
+        </div>
+        <div class="row">
+            <table class="centered striped">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Дата/Время</th>
+                        <th>Свободно мест</th>
+                        <th>ЦК</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="sessions-tbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+    <script src="js/bin/materialize.js"></script>
+    <script src="mainWindow.js"></script>
+</body>
+
+</html>

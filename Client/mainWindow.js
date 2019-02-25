@@ -41,7 +41,7 @@ let book_btn = document.getElementById('book-btn');
 let back_to_sessions = document.getElementById('back-to-sessions');
 let back_to_menu_1 = document.getElementById('back-to-menu-1');
 let back_to_menu_2 = document.getElementById('back-to-menu-2');
-let total_price;
+let total_price = 0;
 
 document.addEventListener('DOMContentLoaded', function() {
     var elems = document.querySelectorAll('.slider');
@@ -64,6 +64,9 @@ document.addEventListener('DOMContentLoaded', function() {
     menu_btns[2].addEventListener('click', e => {
         slider.set(3);
         slider.pause();
+    });
+    menu_btns[3].addEventListener('click', e => {
+        ipcRenderer.send('quit');
     });
     back_to_sessions.addEventListener('click', e => {
         update_sessions();
@@ -146,7 +149,6 @@ function insert_session_card(session) {
     book_a.innerText = 'Забронировать';
     book_a.addEventListener('click', e => {
         session_id = e.target.session_id;
-        total_price = 0;
         update_seats();
         slider.set(2);
         slider.pause();

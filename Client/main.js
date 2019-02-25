@@ -42,6 +42,7 @@ app.on('ready', () => {
     // Quit app on mainWindow close
     mainWindow.on('close', e => {
         if (selected_cnt == 0) {
+            app.quit();
             return;
         }
         const quit = dialog.showMessageBox({
@@ -135,6 +136,10 @@ ipcMain.on('cancelbooking', (e, payload) => {
 ipcMain.on('cancelcancelbooking', () => {
     cancelBookingWindow.close();
     cancelBookingWindow = null;
+});
+
+ipcMain.on('quit', () => {
+    mainWindow.close();
 });
 
 const mainMenuTemplate = [
