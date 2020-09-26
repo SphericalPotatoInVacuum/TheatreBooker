@@ -10,7 +10,11 @@ let mainWindow;
 // Listen for app to be ready
 app.on('ready', () => {
     // Create a new window
-    mainWindow = new BrowserWindow({});
+    mainWindow = new BrowserWindow({
+        webPreferences: {
+            nodeIntegration: true
+        }
+    });
     // Maximize our window
     mainWindow.maximize();
     // Load into window

@@ -5,7 +5,7 @@ seat_coefs = {
     (361, 444): 1.2,    # parter (orchestra hole)
     (445, 453): 1.2,    # benuar (left)
     (454, 462): 1.2,    # benuar (right)
-    (463, 618): 1.2,    # amphitheatre
+    (463, 618): 1.2,    # amphitheater
     (619, 707): 0.5,    # mezzanine (left) (belyetazh)
     (708, 796): 0.5,    # mezzanine (right)
     (797, 811): 0.5,    # mezzanine (middle)
@@ -15,5 +15,3 @@ seat_coefs = {
     (1037, 1080): 0.4,  # balcony 2 (middle)
     (1081, 1147): 0.35  # balcony
 }
-
-token_hash = '693e5625e7cd218b9736e0d16892f3cd'

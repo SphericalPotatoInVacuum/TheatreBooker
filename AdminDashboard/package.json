@@ -13,6 +13,7 @@
     "author": "Aleksandr Bogdanov",
     "license": "MIT",
     "dependencies": {
-        "electron": "^7.2.4"
+        "electron": "^7.2.4",
+        "request": "^2.88.2"
     }
 }

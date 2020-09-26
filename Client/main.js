@@ -27,7 +27,11 @@ function seat_inclination(x) {
 // Listen for app to be ready
 app.on('ready', () => {
     // Create a new window
-    mainWindow = new BrowserWindow({});
+    mainWindow = new BrowserWindow({
+        webPreferences: {
+            nodeIntegration: true
+        }
+    });
     // Maximize our window
     mainWindow.maximize();
     // Load into window
@@ -45,7 +49,7 @@ app.on('ready', () => {
             app.quit();
             return;
         }
-        const quit = dialog.showMessageBox({
+        let quit = dialog.showMessageBoxSync({
             type: 'warning',
             title: 'Вы уверены?',
             message: `Вы уверены, что хотите выйти? Вы выбрали, но так и не забронировали ${selected_cnt} ${seat_inclination(
@@ -80,8 +84,11 @@ ipcMain.on('cancelbooking', (e, payload) => {
     if (payload == 0) {
         cancelBookingWindow = new BrowserWindow({
             width: 600,
-            height: 316,
-            resizable: false
+            height: 400,
+            resizable: false,
+            webPreferences: {
+                nodeIntegration: true
+            }
         });
         // Load into window
         cancelBookingWindow.loadURL(
@@ -120,9 +127,8 @@ ipcMain.on('cancelbooking', (e, payload) => {
                 } else {
                     dialog.showMessageBox({
                         title: 'Успешно!',
-                        message: `Вы успешно отменили бронь на ${
-                            body.items.length
-                        } ${seat_inclination(body.items.length)}`,
+                        message: `Вы успешно отменили бронь на ${body.items.length
+                            } ${seat_inclination(body.items.length)}`,
                         buttons: ['ОК']
                     });
                     cancelBookingWindow.close();

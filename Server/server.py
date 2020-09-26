@@ -5,14 +5,21 @@ from json import dumps
 from flask_jsonpify import jsonify
 from datetime import datetime
 from hashlib import md5
-from config import base_price, seat_coefs, token_hash
-from os import urandom
+from config import base_price, seat_coefs
+from uuid import uuid4
+from os import environ
 
 # Initialize flask app and api
 app = Flask(__name__)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///theatre.db'
 db = SQLAlchemy(app)
 api = Api(app)
+
+token_hash = environ.get('TOKEN_HASH', None)
+if token_hash is None:
+    print('token_hash was not specified')
+    exit(1)
 
 
 class Session(db.Model):
@@ -158,9 +165,9 @@ class Seats_seat_id(Resource):
                     'Error': 'Booking overlap'
                 }, 403
             seats.append(seat)
-        token = urandom(32).hex()
+        token = uuid4().hex
         while BookToken.query.filter_by(token=token).first() is not None:
-            token = urandom(32).hex()
+            token = uuid4().hex
         for seat in seats:
             seat.holder_token = token
             seat.available = False

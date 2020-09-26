@@ -1,3 +1,5 @@
 node_modules
 sass
-.vscode
+__pycache__
+venv
+dist
